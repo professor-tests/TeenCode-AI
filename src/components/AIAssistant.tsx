@@ -13,6 +13,7 @@ const suggestedQuestions = [
     "اشرح لي الـ Flexbox",
     "كيف أضيف زر في HTML؟",
     "ما هو الـ JavaScript؟",
+    "من هو مطور الموقع Professor؟",
 ];
 
 const aiResponses: Record<string, string> = {
@@ -22,6 +23,8 @@ const aiResponses: Record<string, string> = {
     "javascript": "JavaScript هي لغة البرمجة التي تُحيي موقعك! تجعل الأزرار تعمل، النماذج تتحقق من البيانات، والصفحة تتفاعل مع المستخدم. مثال:\n\nbutton.addEventListener('click', () => {\n  alert('مرحباً!');\n});",
     "button": "لإضافة زر في HTML، استخدم:\n\n<button>اضغط هنا</button>\n\nويمكنك تنسيقه بـ CSS ليبدو جميلاً، ثم إضافة حدث click بالـ JavaScript.",
     "default": "سؤال رائع! أنا هنا لمساعدتك في رحلة تعلم البرمجة. يمكنك سؤالي عن أي مفهوم مثل HTML، CSS، JavaScript، أو كيفية بناء مشاريع صغيرة. جرّب طرح سؤال محدد وسأشرحه لك بطريقة بسيطة! ✨",
+    "professor":"الموقع طور بواسطة سمير ,مطور شغوف يؤمن بأن كل مراهق يستحق ان يتعلم البرمجة ويصنع مستقبله بيده",
+    "samir":"سير تا نعيطو عليك شباعي تعرف عليا ههههه",
 };
 
 function getAIResponse(question: string): string {
