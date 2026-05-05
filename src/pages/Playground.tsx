@@ -91,8 +91,9 @@ function highlightCode(code: string, lang: Tab): string {
     let escaped = escapeHtml(code);
 
     if (lang === "html") {
+        // نصلح: نبحث عن tags كاملة (مغلقة بـ >) فقط
         escaped = escaped
-            .replace(/(&lt;\/?)([\w-]+)/g, '$1<span style="color:#c084fc">$2</span>')
+            .replace(/(&lt;\/?)([\w-]+)(?=&gt;)/g, '$1<span style="color:#c084fc">$2</span>')
             .replace(/([\w-]+)=(&quot;|")([^"&]*)(&quot;|")/g, '<span style="color:#22d3ee">$1</span>=<span style="color:#fbbf24">$2$3$4</span>');
     } else if (lang === "css") {
         escaped = escaped
