@@ -87,23 +87,23 @@ function escapeHtml(s: string): string {
     return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
+// نستخدم classes بدل inline styles لتجنب تعارض HTML tags
 function highlightCode(code: string, lang: Tab): string {
     let escaped = escapeHtml(code);
 
     if (lang === "html") {
-        // نصلح: نبحث عن tags كاملة (مغلقة بـ >) فقط
         escaped = escaped
-            .replace(/(&lt;\/?)([\w-]+)(?=&gt;)/g, '$1<span style="color:#c084fc">$2</span>')
-            .replace(/([\w-]+)=(&quot;|")([^"&]*)(&quot;|")/g, '<span style="color:#22d3ee">$1</span>=<span style="color:#fbbf24">$2$3$4</span>');
+            .replace(/(&lt;\/?[\w-]+&gt;)/g, '<span class="code-tag">$1</span>')
+            .replace(/([\w-]+)=(&quot;|")([^"&]*)(&quot;|")/g, '<span class="code-attr">$1</span>=<span class="code-string">$2$3$4</span>');
     } else if (lang === "css") {
         escaped = escaped
-            .replace(/([.#][\w-]+)(?=\s*\{)/g, '<span style="color:#f472b6">$1</span>')
-            .replace(/\b([\w-]+)(\s*:)/g, '<span style="color:#22d3ee">$1</span>$2');
+            .replace(/([.#][\w-]+)(?=\s*\{)/g, '<span class="code-selector">$1</span>')
+            .replace(/\b([\w-]+)(\s*:)/g, '<span class="code-prop">$1</span>$2');
     } else {
         escaped = escaped
-            .replace(/\b(const|let|var|function|return|if|else|for|while|document|getElementById|addEventListener|setTimeout)\b/g, '<span style="color:#c084fc">$1</span>')
-            .replace(/('[^']*')/g, '<span style="color:#fbbf24">$1</span>')
-            .replace(/(\/\/[^\n]*)/g, '<span style="color:#64748b">$1</span>');
+            .replace(/\b(const|let|var|function|return|if|else|for|while|document|getElementById|addEventListener|setTimeout)\b/g, '<span class="code-keyword">$1</span>')
+            .replace(/('[^']*')/g, '<span class="code-string">$1</span>')
+            .replace(/(\/\/[^\n]*)/g, '<span class="code-comment">$1</span>');
     }
 
     return escaped;
@@ -121,7 +121,7 @@ export default function Playground() {
     const currentValue = tab === "html" ? html : tab === "css" ? css : js;
     const setCurrent = tab === "html" ? setHtml : tab === "css" ? setCss : setJs;
 
-    // كل tab يعرض محتواه فقط - ما نخلطهم تلقائياً
+    // كل tab يعرض محتواه فقط
     const getPreviewContent = useMemo(() => {
         if (tab === "html") {
             return html;
@@ -140,14 +140,12 @@ export default function Playground() {
         }
     }, [html, css, js, tab]);
 
-    // تحديث srcDoc عند فتح الصفحة أول مرة وعند كل تغيير
     useEffect(() => {
         if (!autoRun) return;
         const t = setTimeout(() => setSrcDoc(getPreviewContent), 400);
         return () => clearTimeout(t);
     }, [getPreviewContent, autoRun]);
 
-    // تشغيل يدوي
     const run = () => setSrcDoc(getPreviewContent);
 
     const reset = () => {
