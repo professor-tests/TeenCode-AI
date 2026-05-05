@@ -120,23 +120,41 @@ export default function Playground() {
     const currentValue = tab === "html" ? html : tab === "css" ? css : js;
     const setCurrent = tab === "html" ? setHtml : tab === "css" ? setCss : setJs;
 
-    const compose = useMemo(() => {
-        const scriptTag = "<" + "script>" + js + "<" + "/script>";
-        return html.replace(/<\/body>/i, `<style>${css}</style>${scriptTag}</body>`);
-    }, [html, css, js]);
+    // كل tab يعرض محتواه فقط - ما نخلطهم تلقائياً
+    const getPreviewContent = useMemo(() => {
+        if (tab === "html") {
+            return html;
+        } else if (tab === "css") {
+            return `<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head><meta charset="UTF-8"><title>CSS Preview</title></head>
+<body style="background:#0a0a12; color:#e2e8f0; font-family:'Cairo',monospace; padding:20px; margin:0; white-space:pre-wrap; line-height:1.6; font-size:14px;">${escapeHtml(css)}</body>
+</html>`;
+        } else {
+            return `<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head><meta charset="UTF-8"><title>JS Preview</title></head>
+<body style="background:#0a0a12; color:#e2e8f0; font-family:'Cairo',monospace; padding:20px; margin:0; white-space:pre-wrap; line-height:1.6; font-size:14px;">${escapeHtml(js)}</body>
+</html>`;
+        }
+    }, [html, css, js, tab]);
 
+    // تحديث srcDoc عند فتح الصفحة أول مرة وعند كل تغيير
     useEffect(() => {
         if (!autoRun) return;
-        const t = setTimeout(() => setSrcDoc(compose), 400);
+        const t = setTimeout(() => setSrcDoc(getPreviewContent), 400);
         return () => clearTimeout(t);
-    }, [compose, autoRun]);
+    }, [getPreviewContent, autoRun]);
 
-    const run = () => setSrcDoc(compose);
+    // تشغيل يدوي
+    const run = () => setSrcDoc(getPreviewContent);
+
     const reset = () => {
         setHtml(initialHTML);
         setCss(initialCSS);
         setJs(initialJS);
     };
+
     const save = () => {
         setSaved(true);
         setTimeout(() => setSaved(false), 2000);
@@ -208,10 +226,19 @@ export default function Playground() {
                                         <div key={i} className="leading-5">{i + 1}</div>
                                     ))}
                                 </div>
-                                {/* Code area */}
+                                {/* Code area - مطابقة تامة بين textarea و pre */}
                                 <div className="flex-1 relative">
                                     <pre
                                         className="absolute inset-0 p-4 text-[13px] font-mono leading-5 whitespace-pre-wrap break-words pointer-events-none overflow-auto text-white"
+                                        style={{ 
+                                            fontFamily: "monospace",
+                                            fontSize: "13px",
+                                            lineHeight: "20px",
+                                            padding: "16px",
+                                            whiteSpace: "pre-wrap",
+                                            wordWrap: "break-word",
+                                            overflow: "auto"
+                                        }}
                                         dangerouslySetInnerHTML={{ __html: highlighted + "\n" }}
                                     />
                                     <textarea
@@ -219,7 +246,16 @@ export default function Playground() {
                                         onChange={(e) => setCurrent(e.target.value)}
                                         spellCheck={false}
                                         className="absolute inset-0 p-4 text-[13px] font-mono leading-5 bg-transparent outline-none resize-none text-transparent caret-white scrollbar-thin"
-                                        style={{ WebkitTextFillColor: "transparent" }}
+                                        style={{ 
+                                            WebkitTextFillColor: "transparent",
+                                            fontFamily: "monospace",
+                                            fontSize: "13px",
+                                            lineHeight: "20px",
+                                            padding: "16px",
+                                            whiteSpace: "pre-wrap",
+                                            wordWrap: "break-word",
+                                            overflow: "auto"
+                                        }}
                                     />
                                 </div>
                             </div>
@@ -235,7 +271,9 @@ export default function Playground() {
                                     <div className="w-2.5 h-2.5 rounded-full bg-amber-500/70" />
                                     <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/70" />
                                 </div>
-                                <span className="text-[10px] text-muted-foreground font-mono mr-2">preview.html</span>
+                                <span className="text-[10px] text-muted-foreground font-mono mr-2">
+                                    preview.{tab === "js" ? "js" : tab === "css" ? "css" : "html"}
+                                </span>
                             </div>
                             <div className="flex items-center gap-1 text-[10px] text-emerald-400">
                                 <Eye className="w-3 h-3" />
