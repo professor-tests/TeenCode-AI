@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TeenCode AI</title>
+    <meta name="description" content="%VITE_APP_DESCRIPTION%" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Tajawal:wght@400;500;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        border: 'hsl(240 10% 16%)',
+                        input: 'hsl(240 10% 14%)',
+                        ring: 'hsl(262 83% 63%)',
+                        background: 'hsl(240 15% 4%)',
+                        foreground: 'hsl(0 0% 96%)',
+                        primary: {
+                            DEFAULT: 'hsl(262 83% 63%)',
+                            foreground: 'hsl(0 0% 100%)',
+                        },
+                        secondary: {
+                            DEFAULT: 'hsl(240 10% 12%)',
+                            foreground: 'hsl(0 0% 96%)',
+                        },
+                        destructive: {
+                            DEFAULT: 'hsl(0 84% 60%)',
+                            foreground: 'hsl(0 0% 100%)',
+                        },
+                        muted: {
+                            DEFAULT: 'hsl(240 10% 12%)',
+                            foreground: 'hsl(240 5% 65%)',
+                        },
+                        accent: {
+                            DEFAULT: 'hsl(189 94% 43%)',
+                            foreground: 'hsl(0 0% 100%)',
+                        },
+                        popover: {
+                            DEFAULT: 'hsl(240 15% 7%)',
+                            foreground: 'hsl(0 0% 96%)',
+                        },
+                        card: {
+                            DEFAULT: 'hsl(240 15% 7%)',
+                            foreground: 'hsl(0 0% 96%)',
+                        },
+                    },
+                    borderRadius: {
+                        lg: '1rem',
+                        md: 'calc(1rem - 4px)',
+                        sm: 'calc(1rem - 8px)',
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            font-family: 'Cairo', 'Tajawal', system-ui, sans-serif;
+            background-color: hsl(240 15% 4%);
+            color: hsl(0 0% 96%);
+        }
+
+        code,
+        pre,
+        .font-mono {
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            direction: ltr;
+            text-align: left;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+</body>
+
+</html>
