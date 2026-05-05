@@ -143,7 +143,7 @@ export default function Index() {
                     <div className="max-w-4xl mx-auto text-center">
                         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass mb-6 animate-fade-in">
                             <Sparkles className="w-4 h-4 text-amber-400" />
-                            <span className="text-xs">منصة البرمجة رقم ١ للمراهقين العرب</span>
+                            <span className="text-xs">منصة البرمجة رقم ١ للمراهقين </span>
                             <span className="text-xs text-muted-foreground">· 2026</span>
                         </div>
 
@@ -415,7 +415,7 @@ export default function Index() {
                                 <Code2 className="w-5 h-5 text-white" />
                             </div>
                             <div>
-                                <div className="font-bold gradient-text">TeenCode AI</div>
+                                <div className="font-bold gradient-text">TeenCode AI - By ProfessorOffice</div>
                                 <div className="text-[10px] text-muted-foreground">© 2026 جميع الحقوق محفوظة</div>
                             </div>
                         </div>
