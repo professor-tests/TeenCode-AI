@@ -1,16 +1,15 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Play, RefreshCw, Save, Eye, Code2 } from "lucide-react";
 import AppLayout from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-// CodeMirror
-import { EditorView, basicSetup } from "codemirror";
-import { EditorState } from "@codemirror/state";
+import CodeMirrorReact from "@uiw/react-codemirror";
 import { html as langHtml } from "@codemirror/lang-html";
-import { css as langCss } from "@codemirror/lang-css";
+import { css  as langCss  } from "@codemirror/lang-css";
 import { javascript as langJs } from "@codemirror/lang-javascript";
 import { oneDark } from "@codemirror/theme-one-dark";
+import { EditorView } from "@codemirror/view";
 
 // ─── المحتوى الافتراضي ───────────────────────────────────────────────────────
 
@@ -91,171 +90,58 @@ btn.addEventListener('click', () => {
   }, 150);
 });`;
 
-// ─── الثيم المخصص لـ CodeMirror ──────────────────────────────────────────────
+type Tab = "html" | "css" | "js";
 
-const customTheme = EditorView.theme({
-    "&": {
-        height: "100%",
-        fontSize: "13px",
-        background: "#0a0a12",
-    },
-    ".cm-editor": {
-        height: "100%",
-    },
-    ".cm-editor.cm-focused": {
-        outline: "none",
-    },
+// ─── ثيم مخصص — مع overflow صريح للـ scroller ────────────────────────────────
+const editorTheme = EditorView.theme({
+    "&":        { background: "#0a0a12 !important", height: "100%" },
+    ".cm-editor":  { height: "100% !important" },
     ".cm-scroller": {
-        overflow: "auto",
-        fontFamily: "'Fira Code', 'Fira Mono', monospace",
-        lineHeight: "1.25rem",
+        overflow: "auto !important",   // ← هذا هو سبب كسر الـ scroll
+        fontFamily: "monospace",
     },
     ".cm-gutters": {
-        background: "rgba(255,255,255,0.02)",
+        background: "rgba(255,255,255,0.02) !important",
         borderRight: "1px solid rgba(255,255,255,0.05)",
         color: "rgba(255,255,255,0.2)",
     },
-    ".cm-activeLineGutter": {
-        background: "rgba(139,92,246,0.12)",
-    },
-    ".cm-activeLine": {
-        background: "rgba(139,92,246,0.06)",
-    },
-    ".cm-selectionBackground": {
-        background: "rgba(139,92,246,0.3) !important",
-    },
-    ".cm-cursor": {
-        borderLeftColor: "#c084fc",
-    },
+    ".cm-activeLineGutter":    { background: "rgba(139,92,246,0.12) !important" },
+    ".cm-activeLine":          { background: "rgba(139,92,246,0.06) !important" },
+    ".cm-cursor":              { borderLeftColor: "#c084fc" },
+    ".cm-selectionBackground": { background: "rgba(139,92,246,0.3) !important" },
 });
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-type Tab = "html" | "css" | "js";
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function Playground() {
-    const [tab, setTab] = useState<Tab>("html");
-    const [html, setHtml] = useState(initialHTML);
-    const [css, setCss] = useState(initialCSS);
-    const [js, setJs] = useState(initialJS);
+    const [tab,     setTab]     = useState<Tab>("html");
+    const [html,    setHtml]    = useState(initialHTML);
+    const [css,     setCss]     = useState(initialCSS);
+    const [js,      setJs]      = useState(initialJS);
     const [autoRun, setAutoRun] = useState(true);
-    const [srcDoc, setSrcDoc] = useState("");
-    const [saved, setSaved] = useState(false);
+    const [srcDoc,  setSrcDoc]  = useState("");
+    const [saved,   setSaved]   = useState(false);
+    const [mounted, setMounted] = useState(false);
 
-    // refs لتجنب stale closures داخل CodeMirror
-    const htmlRef = useRef(initialHTML);
-    const cssRef = useRef(initialCSS);
-    const jsRef = useRef(initialJS);
-    const tabRef = useRef<Tab>("html");
+    useEffect(() => setMounted(true), []);
 
-    htmlRef.current = html;
-    cssRef.current = css;
-    jsRef.current = js;
-    tabRef.current = tab;
-
-    const editorContainerRef = useRef<HTMLDivElement>(null);
-    const viewRef = useRef<EditorView | null>(null);
-
-    // ── عدد الأسطر للتاب الحالي ──
     const lineCount = (tab === "html" ? html : tab === "css" ? css : js).split("\n").length;
 
-    // ── تجميع HTML + CSS + JS للـ preview ──
     const compose = useMemo(() => {
         const scriptTag = "<" + "script>" + js + "<" + "/script>";
         return html.replace(/<\/body>/i, `<style>${css}</style>${scriptTag}</body>`);
     }, [html, css, js]);
 
-    // ── التشغيل التلقائي ──
     useEffect(() => {
         if (!autoRun) return;
         const timer = setTimeout(() => setSrcDoc(compose), 400);
         return () => clearTimeout(timer);
     }, [compose, autoRun]);
 
-    // ── إنشاء/إعادة إنشاء محرر CodeMirror عند تغيير التاب ──
-    useEffect(() => {
-        const container = editorContainerRef.current;
-        if (!container) return;
+    const run   = () => setSrcDoc(compose);
+    const reset = () => { setHtml(initialHTML); setCss(initialCSS); setJs(initialJS); };
+    const save  = () => { setSaved(true); setTimeout(() => setSaved(false), 2000); };
 
-        // تدمير المحرر القديم
-        viewRef.current?.destroy();
-        viewRef.current = null;
-
-        const langExtension =
-            tab === "html" ? langHtml() :
-            tab === "css"  ? langCss()  :
-                             langJs();
-
-        const initialDoc =
-            tab === "html" ? htmlRef.current :
-            tab === "css"  ? cssRef.current  :
-                             jsRef.current;
-
-        const view = new EditorView({
-            state: EditorState.create({
-                doc: initialDoc,
-                extensions: [
-                    basicSetup,
-                    langExtension,
-                    oneDark,
-                    customTheme,
-                    EditorView.updateListener.of((update) => {
-                        if (!update.docChanged) return;
-                        const value = update.state.doc.toString();
-                        const currentTab = tabRef.current;
-                        if (currentTab === "html") setHtml(value);
-                        else if (currentTab === "css") setCss(value);
-                        else setJs(value);
-                    }),
-                ],
-            }),
-            parent: container,
-        });
-
-        viewRef.current = view;
-
-        return () => {
-            view.destroy();
-            viewRef.current = null;
-        };
-    }, [tab]);
-
-    // ── إعادة تعيين المحرر عند الضغط على إعادة (للتاب الحالي) ──
-    const dispatchReset = (resetValue: string) => {
-        const view = viewRef.current;
-        if (!view) return;
-        view.dispatch({
-            changes: {
-                from: 0,
-                to: view.state.doc.length,
-                insert: resetValue,
-            },
-        });
-    };
-
-    // ── الدوال ──
-    const run = () => setSrcDoc(compose);
-
-    const reset = () => {
-        setHtml(initialHTML);
-        setCss(initialCSS);
-        setJs(initialJS);
-        // تحديث المحرر المفتوح حالياً مباشرةً
-        const resetValue =
-            tab === "html" ? initialHTML :
-            tab === "css"  ? initialCSS  :
-                             initialJS;
-        dispatchReset(resetValue);
-    };
-
-    const save = () => {
-        setSaved(true);
-        setTimeout(() => setSaved(false), 2000);
-    };
-
-    // ─────────────────────────────────────────────────────────────────────────
     return (
         <AppLayout>
             <div className="p-4 lg:p-6 h-screen flex flex-col">
@@ -278,29 +164,15 @@ export default function Playground() {
                             />
                             تشغيل تلقائي
                         </label>
-                        <Button
-                            onClick={run}
-                            size="sm"
-                            variant="outline"
-                            className="!bg-transparent !hover:bg-white/5 border-white/10 rounded-xl"
-                        >
+                        <Button onClick={run} size="sm" variant="outline" className="!bg-transparent !hover:bg-white/5 border-white/10 rounded-xl">
                             <Play className="w-3.5 h-3.5 ml-1.5" />
                             تشغيل
                         </Button>
-                        <Button
-                            onClick={reset}
-                            size="sm"
-                            variant="outline"
-                            className="!bg-transparent !hover:bg-white/5 border-white/10 rounded-xl"
-                        >
+                        <Button onClick={reset} size="sm" variant="outline" className="!bg-transparent !hover:bg-white/5 border-white/10 rounded-xl">
                             <RefreshCw className="w-3.5 h-3.5 ml-1.5" />
                             إعادة
                         </Button>
-                        <Button
-                            onClick={save}
-                            size="sm"
-                            className="gradient-primary hover:opacity-90 rounded-xl"
-                        >
+                        <Button onClick={save} size="sm" className="gradient-primary hover:opacity-90 rounded-xl">
                             <Save className="w-3.5 h-3.5 ml-1.5" />
                             {saved ? "تم الحفظ ✓" : "حفظ"}
                         </Button>
@@ -310,8 +182,8 @@ export default function Playground() {
                 {/* Editor + Preview */}
                 <div className="flex-1 grid lg:grid-cols-2 gap-4 min-h-0">
 
-                    {/* Editor */}
-                    <div className="glass-strong rounded-2xl overflow-hidden flex flex-col">
+                    {/* ── Editor ── */}
+                    <div className="glass-strong rounded-2xl overflow-hidden flex flex-col min-h-0">
 
                         {/* Tab bar */}
                         <div className="flex items-center justify-between border-b border-white/5 px-3 py-2 bg-white/[0.02] flex-shrink-0">
@@ -337,16 +209,71 @@ export default function Playground() {
                             </div>
                         </div>
 
-                        {/* CodeMirror container — direction ltr دائماً للكود */}
+                        {/*
+                            الحاوية الرئيسية للمحرر:
+                            - flex-1 min-h-0  ← ضروري لكي يأخذ المحرر المساحة المتبقية ولا يتجاوزها
+                            - position relative ← لكي تعمل absolute inset-0 على الأبناء
+                        */}
                         <div
-                            ref={editorContainerRef}
-                            className="flex-1 overflow-hidden"
+                            className="flex-1 min-h-0 relative"
                             style={{ direction: "ltr" }}
-                        />
+                        >
+                            {mounted && (
+                                <>
+                                    {/* HTML */}
+                                    <div style={{
+                                        position: "absolute", inset: 0,
+                                        display: tab === "html" ? "block" : "none",
+                                    }}>
+                                        <CodeMirrorReact
+                                            value={html}
+                                            extensions={[langHtml(), editorTheme]}
+                                            theme={oneDark}
+                                            onChange={(val) => setHtml(val)}
+                                            height="100%"
+                                            style={{ height: "100%" }}
+                                            basicSetup={{ tabSize: 2 }}
+                                        />
+                                    </div>
+
+                                    {/* CSS */}
+                                    <div style={{
+                                        position: "absolute", inset: 0,
+                                        display: tab === "css" ? "block" : "none",
+                                    }}>
+                                        <CodeMirrorReact
+                                            value={css}
+                                            extensions={[langCss(), editorTheme]}
+                                            theme={oneDark}
+                                            onChange={(val) => setCss(val)}
+                                            height="100%"
+                                            style={{ height: "100%" }}
+                                            basicSetup={{ tabSize: 2 }}
+                                        />
+                                    </div>
+
+                                    {/* JS */}
+                                    <div style={{
+                                        position: "absolute", inset: 0,
+                                        display: tab === "js" ? "block" : "none",
+                                    }}>
+                                        <CodeMirrorReact
+                                            value={js}
+                                            extensions={[langJs(), editorTheme]}
+                                            theme={oneDark}
+                                            onChange={(val) => setJs(val)}
+                                            height="100%"
+                                            style={{ height: "100%" }}
+                                            basicSetup={{ tabSize: 2 }}
+                                        />
+                                    </div>
+                                </>
+                            )}
+                        </div>
                     </div>
 
-                    {/* Preview */}
-                    <div className="glass-strong rounded-2xl overflow-hidden flex flex-col">
+                    {/* ── Preview ── */}
+                    <div className="glass-strong rounded-2xl overflow-hidden flex flex-col min-h-0">
                         <div className="flex items-center justify-between border-b border-white/5 px-3 py-2 bg-white/[0.02] flex-shrink-0">
                             <div className="flex items-center gap-2">
                                 <div className="flex gap-1.5">
